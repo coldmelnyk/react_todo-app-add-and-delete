@@ -25,11 +25,42 @@ export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodoTitle, setNewTodoTitle] = useState<string>('');
   const [filterType, setFilterType] = useState<FilterTypes>(FilterTypes.All);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<ErrorMessage>(
     ErrorMessage.none,
   );
+  const [tempTodo, setTempTodo] = useState<Todo | null>(null);
+  const [arrayOfTodoId, setArrayOfTodoId] = useState<number[]>([]);
+
+  const clearAllCompletedTodos = () => {
+    setIsLoading(true);
+    const ids: number[] = [];
+
+    for (const todo of todos) {
+      if (todo.completed) {
+        ids.push(todo.id);
+      }
+    }
+
+    if (ids.length > 0) {
+      setArrayOfTodoId(ids);
+
+      for (const id of ids) {
+        deleteTodo(id)
+          .then(() =>
+            setTodos(currentTodos =>
+              currentTodos.filter(todo => todo.id !== id),
+            ),
+          )
+          .catch(() => {
+            setErrorMessage(ErrorMessage.delete);
+          });
+      }
+
+      setArrayOfTodoId([]);
+      setIsLoading(false);
+    }
+  };
 
   const uploadingTodos = useMemo(() => {
     setErrorMessage(ErrorMessage.none);
@@ -44,36 +75,52 @@ export const App: React.FC = () => {
   const deleteSelectedTodo = (targetId: number) => {
     setErrorMessage(ErrorMessage.none);
     setIsLoading(true);
-    setTodos(currentTodos => currentTodos.filter(todo => todo.id !== targetId));
+    setArrayOfTodoId([targetId]);
 
     deleteTodo(targetId)
+      .then(() =>
+        setTodos(currentTodos =>
+          currentTodos.filter(todo => todo.id !== targetId),
+        ),
+      )
       .catch(() => {
         setTodos(todos);
         setErrorMessage(ErrorMessage.delete);
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        setArrayOfTodoId([]);
+        setIsLoading(false);
+      });
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     setErrorMessage(ErrorMessage.none);
 
     const pushingNewTodo: Omit<Todo, 'id'> = {
       userId: USER_ID,
-      title: newTodoTitle,
+      title: newTodoTitle.trim(),
       completed: false,
     };
 
     if (newTodoTitle) {
       setIsLoading(true);
+      setTempTodo({
+        id: 0,
+        userId: USER_ID,
+        title: newTodoTitle.trim(),
+        completed: false,
+      });
 
       return addTodo(pushingNewTodo)
-        .then(newTodo => setTodos(currentTodos => [...currentTodos, newTodo]))
+        .then(newTodo => {
+          setTodos(currentTodos => [...currentTodos, newTodo]);
+          setNewTodoTitle('');
+        })
         .catch(() => setErrorMessage(ErrorMessage.add))
         .finally(() => {
+          setTempTodo(null);
           setIsLoading(false);
-          setNewTodoTitle('');
         });
     }
 
@@ -91,6 +138,7 @@ export const App: React.FC = () => {
 
   const handleTodoStatus = (todo: Todo) => {
     setIsLoading(true);
+    setArrayOfTodoId([todo.id]);
 
     const todoWithNewStatus: Todo = {
       id: todo.id,
@@ -113,7 +161,10 @@ export const App: React.FC = () => {
         }),
       )
       .catch(() => setErrorMessage(ErrorMessage.update))
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        setArrayOfTodoId([]);
+        setIsLoading(false);
+      });
   };
 
   useEffect(() => uploadingTodos);
@@ -128,16 +179,20 @@ export const App: React.FC = () => {
 
       <div className="todoapp__content">
         <Header
+          isLoading={isLoading}
           isAllTodosCompleted={isAllTodosCompleted}
           newTodoTitle={newTodoTitle}
           onHeaderSubmit={handleSubmit}
           handleTodoTitle={setNewTodoTitle}
+          todos={todos}
         />
 
         <TodoList
           todos={filteredTodos}
           onDeleteTodo={deleteSelectedTodo}
           onChangeTodoStatus={handleTodoStatus}
+          tempTodo={tempTodo}
+          arrayOfTodoId={arrayOfTodoId}
         />
 
         {!isTodosEmpty && (
@@ -145,6 +200,7 @@ export const App: React.FC = () => {
             todos={todos}
             onSettingFilter={setFilterType}
             filterType={filterType}
+            clearAllCompletedTodos={clearAllCompletedTodos}
           />
         )}
       </div>

@@ -8,12 +8,14 @@ interface Props {
   todos: Todo[];
   onDeleteTodo: (targetId: number) => void;
   onChangeTodoStatus: (todo: Todo) => void;
+  arrayOfTodoId: number[];
 }
 
-export const TodoComponent: React.FC<Props> = ({
+export const TodoItem: React.FC<Props> = ({
   todos,
   onDeleteTodo,
   onChangeTodoStatus,
+  arrayOfTodoId,
 }) => {
   return (
     <>
@@ -47,7 +49,12 @@ export const TodoComponent: React.FC<Props> = ({
             x
           </button>
 
-          <div data-cy="TodoLoader" className="modal overlay">
+          <div
+            data-cy="TodoLoader"
+            className={cn('modal overlay', {
+              'is-active': arrayOfTodoId.includes(todo.id),
+            })}
+          >
             <div className="modal-background has-background-white-ter" />
             <div className="loader" />
           </div>

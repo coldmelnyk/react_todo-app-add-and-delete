@@ -8,12 +8,14 @@ interface Props {
   todos: Todo[];
   onSettingFilter: Dispatch<React.SetStateAction<FilterTypes>>;
   filterType: FilterTypes;
+  clearAllCompletedTodos: () => void;
 }
 
 export const Footer: React.FC<Props> = ({
   todos,
   onSettingFilter,
   filterType,
+  clearAllCompletedTodos,
 }) => {
   const amountOfActiveTodos = todos.filter(todo => !todo.completed).length;
   const isSomeTodoIsCompleted = todos.some(todo => todo.completed === true);
@@ -53,6 +55,7 @@ export const Footer: React.FC<Props> = ({
 
       <button
         type="button"
+        onClick={clearAllCompletedTodos}
         disabled={!isSomeTodoIsCompleted}
         className="todoapp__clear-completed"
         data-cy="ClearCompletedButton"

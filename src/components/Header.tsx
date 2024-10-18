@@ -1,11 +1,14 @@
-import React, { Dispatch, FormEvent } from 'react';
+import React, { Dispatch, FormEvent, useEffect, useRef } from 'react';
 import cn from 'classnames';
+import { Todo } from '../types/Todo';
 
 interface Props {
   isAllTodosCompleted: boolean;
   newTodoTitle: string;
   onHeaderSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
   handleTodoTitle: Dispatch<React.SetStateAction<string>>;
+  isLoading: boolean;
+  todos: Todo[];
 }
 
 export const Header: React.FC<Props> = ({
@@ -13,7 +16,17 @@ export const Header: React.FC<Props> = ({
   newTodoTitle,
   onHeaderSubmit,
   handleTodoTitle,
+  isLoading,
+  todos,
 }) => {
+  const fieldFocus = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (fieldFocus.current) {
+      fieldFocus.current.focus();
+    }
+  }, [isLoading, todos]);
+
   return (
     <header className="todoapp__header">
       <button
@@ -26,6 +39,8 @@ export const Header: React.FC<Props> = ({
 
       <form onSubmit={event => onHeaderSubmit(event)}>
         <input
+          ref={fieldFocus}
+          disabled={isLoading}
           value={newTodoTitle}
           onChange={event => handleTodoTitle(event.target.value.trimStart())}
           data-cy="NewTodoField"
