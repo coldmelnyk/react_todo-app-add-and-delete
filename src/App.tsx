@@ -35,6 +35,7 @@ export const App: React.FC = () => {
   const clearAllCompletedTodos = () => {
     setIsLoading(true);
     const ids: number[] = [];
+    const successIds: number[] = [];
 
     for (const todo of todos) {
       if (todo.completed) {
@@ -47,18 +48,21 @@ export const App: React.FC = () => {
 
       for (const id of ids) {
         deleteTodo(id)
-          .then(() =>
-            setTodos(currentTodos =>
-              currentTodos.filter(todo => todo.id !== id),
-            ),
-          )
+          .then(() => {
+            successIds.push(id);
+          })
           .catch(() => {
             setErrorMessage(ErrorMessage.delete);
           });
       }
 
-      setArrayOfTodoId([]);
-      setIsLoading(false);
+      setTimeout(() => {
+        setTodos(currentTodos =>
+          currentTodos.filter(todo => !successIds.includes(todo.id)),
+        );
+        setArrayOfTodoId([]);
+        setIsLoading(false);
+      }, 300);
     }
   };
 
