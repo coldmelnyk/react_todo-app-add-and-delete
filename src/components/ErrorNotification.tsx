@@ -12,12 +12,18 @@ export const ErrorNotification: React.FC<Props> = ({
   errorMessage,
   handleError,
 }) => {
+  let timeout: NodeJS.Timeout | undefined;
+
   useEffect(() => {
     if (errorMessage !== ErrorMessage.none) {
-      setTimeout(() => {
+      timeout = setTimeout(() => {
         handleError(ErrorMessage.none);
       }, 3000);
     }
+
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [errorMessage]);
 
   return (

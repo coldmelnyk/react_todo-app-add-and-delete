@@ -34,35 +34,27 @@ export const App: React.FC = () => {
 
   const clearAllCompletedTodos = () => {
     setIsLoading(true);
-    const ids: number[] = [];
+    const ids = todos.filter(todo => todo.completed).map(todo => todo.id);
     const successIds: number[] = [];
-
-    for (const todo of todos) {
-      if (todo.completed) {
-        ids.push(todo.id);
-      }
-    }
 
     if (ids.length > 0) {
       setArrayOfTodoId(ids);
 
-      for (const id of ids) {
+      const promiseIds = ids.map(id =>
         deleteTodo(id)
           .then(() => {
             successIds.push(id);
           })
-          .catch(() => {
-            setErrorMessage(ErrorMessage.delete);
-          });
-      }
+          .catch(() => setErrorMessage(ErrorMessage.delete)),
+      );
 
-      setTimeout(() => {
+      Promise.allSettled(promiseIds).then(() => {
         setTodos(currentTodos =>
           currentTodos.filter(todo => !successIds.includes(todo.id)),
         );
         setArrayOfTodoId([]);
         setIsLoading(false);
-      }, 300);
+      });
     }
   };
 
